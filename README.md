@@ -43,10 +43,41 @@ cd build
   - **~50GB disk space**
 - **Operating System:**
   - Armbian / Ubuntu 24.04 (Noble) for native builds
-  - Any Docker-capable Linux for containerized setup
+  - Any Docker or Podman-capable Linux for containerized setup
 - **Windows:** Windows 10/11 with WSL2 running Armbian / Ubuntu 24.04
 - **Access:** Superuser rights (`sudo` or `root`)
 - **Important:** Keep your system up-to-date — outdated tools (e.g., Docker) can cause issues.
+
+### Container Engine Requirements (Docker / Podman)
+
+Armbian automatically detects and supports both **Docker** and **Podman** as container engines. If both are available, Docker is preferred for compatibility.
+
+📖 **For detailed setup instructions, troubleshooting, and advanced configuration, see [CONTAINERIZED_BUILDS.md](CONTAINERIZED_BUILDS.md)**
+
+#### Docker Setup
+- Install Docker following the [official Docker documentation](https://docs.docker.com/engine/install/)
+- Add your user to the `docker` group: `sudo usermod -aG docker $USER`
+- Log out and back in for group changes to take effect
+- QEMU user-mode emulation is handled automatically inside containers
+
+#### Podman Setup (Fedora, RHEL, and derivatives)
+- Install Podman: `sudo dnf install podman`
+- **Important:** Install QEMU user-mode emulation **on the host system**:
+  ```bash
+  sudo dnf install qemu-user-binfmt qemu-user-static-aarch64 \
+                   qemu-user-static-arm qemu-user-static-riscv
+  ```
+- Verify binfmt handlers are registered:
+  ```bash
+  ls /proc/sys/fs/binfmt_misc/qemu-*
+  ```
+- Podman runs with `sudo` (root mode) for Armbian builds due to privileged operation requirements
+
+**Key Differences:**
+- **Podman** requires host-installed QEMU packages for cross-architecture builds (binfmt handlers must be registered on the host with the "F" flag)
+- **Docker** can install QEMU inside containers, but host installation is also recommended
+- **SELinux** (Fedora/RHEL): Keep enforcing mode enabled — Podman support includes necessary mount options
+- **Networking**: Podman uses `--network host` for container builds
 
 ### Download
 
