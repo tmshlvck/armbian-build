@@ -441,7 +441,11 @@ if apply_patches_to_git and readme_markdown is not None and git_repo is not None
 # Use Rich.
 from rich.console import Console
 from rich.table import Table
-from rich.syntax import Syntax
+try:
+	from rich.syntax import Syntax
+except ImportError:
+	# Fallback if pygments is not available
+	Syntax = None
 
 # console width is COLUMNS env var minus 12, or just 160 if GITHUB_ACTIONS env is not empty
 console_width = (int(os.environ.get("COLUMNS", 160)) - 12) if os.environ.get("GITHUB_ACTIONS", "") == "" else 160
@@ -478,7 +482,10 @@ if any_failed_to_apply:
 	for one_patch in failed_to_apply_list:
 		reject_compo = "No rejects"
 		if one_patch.rejects is not None:
-			reject_compo = Syntax(one_patch.rejects, "diff", line_numbers=False, word_wrap=True)
+			if Syntax is not None:
+				reject_compo = Syntax(one_patch.rejects, "diff", line_numbers=False, word_wrap=True)
+			else:
+				reject_compo = one_patch.rejects
 
 		summary_table.add_row(
 			one_patch.rich_name_status(),
