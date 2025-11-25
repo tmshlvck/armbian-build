@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Armbian <noreply@armbian.com>
+Date: Sun, 24 Nov 2025 00:00:00 +0000
+Subject: [PATCH] arm: dts: mt7988: bpi-r4: Fix memory size for 8GB variant
+
+The device tree hardcoded memory to 256MB (0x10000000), which prevented
+the BananaPi-R4 from using more than 4GB even when 8GB is detected by BL2.
+Change to 8GB (0x2 0x00000000) to support the 8GB variant. The actual size
+will be auto-detected by U-Boot based on what BL2 reports.
+
+The reg property format is: <addr_high addr_low size_high size_low>
+- Address: 0x0 0x40000000 (1GB offset in 64-bit space)
+- Size: 0x2 0x00000000 (8GB in 64-bit, split as high=2, low=0)
+
+Signed-off-by: Armbian <noreply@armbian.com>
+---
+ arch/arm/dts/mt7988a-bananapi-bpi-r4.dtsi | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/dts/mt7988a-bananapi-bpi-r4.dtsi b/arch/arm/dts/mt7988a-bananapi-bpi-r4.dtsi
+index 1234567890ab..1234567890ab 100644
+--- a/arch/arm/dts/mt7988a-bananapi-bpi-r4.dtsi
++++ b/arch/arm/dts/mt7988a-bananapi-bpi-r4.dtsi
+@@ -19,7 +19,7 @@
+
+ 	memory@40000000 {
+ 		device_type = "memory";
+-		reg = <0 0x40000000 0 0x10000000>;
++		reg = <0 0x40000000 0x2 0x00000000>;
+ 	};
+
+ 	reg_3p3v: regulator-3p3v {
