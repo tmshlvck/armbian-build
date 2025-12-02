@@ -1,0 +1,9 @@
+--- a/drivers/net/ethernet/spacemit/k1x-emac.c
++++ b/drivers/net/ethernet/spacemit/k1x-emac.c
+@@ -2659,6 +2659,7 @@
+         ndev->hw_features = NETIF_F_SG;
+         ndev->features |= ndev->hw_features;
++        ndev->max_mtu = EMAC_RX_BUF_4K - (ETH_HLEN + ETH_FCS_LEN);
+         priv = netdev_priv(ndev);
+         priv->ndev = ndev;
+         priv->pdev = pdev;
