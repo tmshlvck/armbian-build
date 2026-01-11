@@ -242,7 +242,7 @@ function create_sources_list_and_deploy_repo_key() {
 				URIs: http://deb.debian.org/debian-ports/
 				Suites: ${release}
 				Components: main
-				Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+				Signed-By: /usr/share/keyrings/debian-ports-archive-keyring.gpg
 				Architectures: riscv64
 				EOF
 			fi

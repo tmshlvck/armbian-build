@@ -167,8 +167,8 @@ function create_new_rootfs_cache_via_debootstrap() {
 		fetch_distro_keyring "$RELEASE"
 	fi
 
-	# This is necessary to debootstrap from a non-official repo
-	[[ $ARCH == loong64 ]] && debootstrap_arguments+=("--keyring=/usr/share/keyrings/debian-ports-archive-keyring.gpg")
+	# This is necessary to debootstrap from a non-official repo (debian-ports)
+	[[ $ARCH == loong64 || $ARCH == riscv64 ]] && debootstrap_arguments+=("--keyring=/usr/share/keyrings/debian-ports-archive-keyring.gpg")
 	# Small detour for local apt caching option.
 	local_apt_deb_cache_prepare "before ${LOG_NAME}" # sets LOCAL_APT_CACHE_INFO
 	if [[ "${LOCAL_APT_CACHE_INFO[USE]}" == "yes" ]]; then
