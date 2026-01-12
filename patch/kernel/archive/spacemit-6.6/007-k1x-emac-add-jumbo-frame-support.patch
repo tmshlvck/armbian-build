@@ -40,7 +40,7 @@ Signed-off-by: Armbian <info@armbian.com>
  	ndev->features |= ndev->hw_features;
 +
 +	/* Allow MTU up to 4K buffer size minus ethernet overhead */
-+	ndev->max_mtu = EMAC_RX_BUF_4K - (ETH_HLEN + ETH_FCS_LEN);
++	ndev->max_mtu = EMAC_RX_BUF_4K - ETH_HLEN - ETH_FCS_LEN;
  	priv = netdev_priv(ndev);
  	priv->ndev = ndev;
  	priv->pdev = pdev;
