@@ -1,0 +1,124 @@
+From: Armbian <armbian@armbian.com>
+Subject: wireless: ath: Add CONFIG_ATH_USER_REGD to bypass EEPROM regulatory
+ restrictions
+
+Backport from OpenWRT: Adds the CONFIG_ATH_USER_REGD kernel configuration
+option that allows bypassing EEPROM regulatory domain restrictions. This is
+useful for ath9k/ath10k cards with wrong or zero country code in EEPROM
+(e.g., Compex WLE900VX cards).
+
+When enabled, the driver allows user-space regulatory domain configuration
+instead of enforcing the EEPROM-stored regulatory domain.
+
+Also adds handling for cards with zero/default EEPROM country code to allow
+dynamic user configuration.
+
+Based on OpenWRT patches:
+- 402-ath_regd_optional.patch
+- 406-ath_relax_default_regd.patch
+
+Signed-off-by: Armbian <armbian@armbian.com>
+---
+ drivers/net/wireless/ath/Kconfig |  9 +++++
+ drivers/net/wireless/ath/regd.c  | 58 ++++++++++++++++++++++++++------
+ 2 files changed, 57 insertions(+), 10 deletions(-)
+
+--- a/drivers/net/wireless/ath/Kconfig
++++ b/drivers/net/wireless/ath/Kconfig
+@@ -23,6 +23,15 @@
+
+ if WLAN_VENDOR_ATH
+
++config ATH_USER_REGD
++	bool "Do not enforce EEPROM regulatory restrictions"
++	depends on CFG80211
++	help
++	  This option allows the driver to bypass EEPROM regulatory domain
++	  restrictions and use user-configured regulatory settings instead.
++	  Enable this if your wireless card has incorrect or zero country
++	  code in its EEPROM (e.g., Compex WLE900VX cards).
++
+ config ATH_DEBUG
+ 	bool "Atheros wireless debugging"
+ 	help
+--- a/drivers/net/wireless/ath/regd.c
++++ b/drivers/net/wireless/ath/regd.c
+@@ -116,6 +116,12 @@
+
+ static bool dynamic_country_user_possible(struct ath_regulatory *reg)
+ {
++	if (IS_ENABLED(CONFIG_ATH_USER_REGD))
++		return true;
++
++	if (reg->country_code == CTRY_DEFAULT)
++		return true;
++
+ 	if (IS_ENABLED(CONFIG_ATH_REG_DYNAMIC_USER_CERT_TESTING))
+ 		return true;
+
+@@ -188,6 +194,9 @@
+
+ static bool ath_reg_dyn_country_user_allow(struct ath_regulatory *reg)
+ {
++	if (IS_ENABLED(CONFIG_ATH_USER_REGD))
++		return true;
++
+ 	if (!IS_ENABLED(CONFIG_ATH_REG_DYNAMIC_USER_REG_HINTS))
+ 		return false;
+ 	if (!dynamic_country_user_possible(reg))
+@@ -207,6 +216,11 @@
+ 	return reg->current_rd & ~WORLDWIDE_ROAMING_FLAG;
+ }
+
++static bool is_default_regd(struct ath_regulatory *reg)
++{
++	return ath_regd_get_eepromRD(reg) == CTRY_DEFAULT;
++}
++
+ bool ath_is_world_regd(struct ath_regulatory *reg)
+ {
+ 	return is_wwr_sku(ath_regd_get_eepromRD(reg));
+@@ -345,6 +359,9 @@
+ 	struct ieee80211_channel *ch;
+ 	unsigned int i;
+
++	if (IS_ENABLED(CONFIG_ATH_USER_REGD))
++		return;
++
+ 	for (band = 0; band < NUM_NL80211_BANDS; band++) {
+ 		if (!wiphy->bands[band])
+ 			continue;
+@@ -379,6 +396,9 @@
+ {
+ 	struct ieee80211_supported_band *sband;
+
++	if (IS_ENABLED(CONFIG_ATH_USER_REGD))
++		return;
++
+ 	sband = wiphy->bands[NL80211_BAND_2GHZ];
+ 	if (!sband)
+ 		return;
+@@ -408,6 +428,9 @@
+ 	struct ieee80211_channel *ch;
+ 	unsigned int i;
+
++	if (IS_ENABLED(CONFIG_ATH_USER_REGD))
++		return;
++
+ 	if (!wiphy->bands[NL80211_BAND_5GHZ])
+ 		return;
+
+@@ -640,6 +663,13 @@
+ 	const struct ieee80211_regdomain *regd;
+
+ 	wiphy->reg_notifier = reg_notifier;
++
++	if (IS_ENABLED(CONFIG_ATH_USER_REGD))
++		return 0;
++
++	if (is_default_regd(reg))
++		return 0;
++
+ 	wiphy->regulatory_flags |= REGULATORY_STRICT_REG |
+ 				   REGULATORY_CUSTOM_REG;
+
